@@ -17,9 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    }
+    // Langsung navigasi ke /home saat tombol Masuk diklik
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -82,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Pengelola Aktivitas Akademik & Produktivitas',
+                        'Masuk ke Akun Mahastudy Kelompok 7',
                         style: AppTextStyles.bodySecondary,
                         textAlign: TextAlign.center,
                       ),
@@ -92,12 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: 'contoh: mahasiswa@unand.ac.id',
                         prefixIcon: Icons.email_outlined,
                         controller: _emailController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Email wajib diisi';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       CustomInputField(
@@ -106,12 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icons.lock_outline,
                         isPassword: true,
                         controller: _passwordController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Kata sandi wajib diisi';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 24),
                       CustomButton(
@@ -125,9 +112,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text('Belum punya akun? ', style: AppTextStyles.bodySecondary),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.pushReplacementNamed(context, '/home');
+                            },
                             child: Text(
-                              'Daftar Baru',
+                              'Masuk Mode Tamu',
                               style: AppTextStyles.body.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
