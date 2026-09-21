@@ -1,17 +1,9 @@
-# belajar_flutter
+# Mahastudy - Kelompok 7
 
-A new Flutter project.
+Aplikasi Mobile Pengelola Aktivitas Akademik dan Produktivitas Mahasiswa.
+Proyek Tugas Besar Mata Kuliah Pemrograman Mobile.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Anggota Kelompok 7
+- Tasya Putri Wandari (2411523027)
+- Dinda Nathasya Putri (2411523032)
+- Zizi Salsabila (2411523034)
