@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+// TAMBAHAN LATIHAN 2: Import router dan validator
+import '../routes/app_routes.dart';
+import '../utils/validators.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/custom_button.dart';
@@ -12,13 +15,26 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // (1) Key untuk Form dan controller untuk setiap field
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _handleLogin() {
-    // Langsung navigasi ke /home saat tombol Masuk diklik
-    Navigator.pushReplacementNamed(context, '/home');
+  // (2) TAMBAHAN LATIHAN 2: Dispose controller saat layar ditutup
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // (3) TAMBAHAN LATIHAN 2: Submit form dengan validasi dan navigasi ke Home
+  void _submit() {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
+
+    // Isian benar -> pindah ke Home menggunakan named route, Login dibuang dari stack
+    Navigator.pushReplacementNamed(context, AppRoutes.home);
   }
 
   @override
@@ -46,8 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
+                // (4) TAMBAHAN LATIHAN 2: Form dengan autovalidateMode
                 child: Form(
                   key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,34 +104,40 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
+                      // (5) TAMBAHAN LATIHAN 2: Field Email dengan validator
                       CustomInputField(
                         label: 'Email Mahasiswa',
                         hint: 'contoh: mahasiswa@unand.ac.id',
                         prefixIcon: Icons.email_outlined,
                         controller: _emailController,
+                        validator: Validators.email,
                       ),
                       const SizedBox(height: 16),
+                      // (5) TAMBAHAN LATIHAN 2: Field Password dengan validator
                       CustomInputField(
                         label: 'Kata Sandi',
                         hint: 'Masukkan kata sandi anda',
                         prefixIcon: Icons.lock_outline,
                         isPassword: true,
                         controller: _passwordController,
+                        validator: Validators.password,
                       ),
                       const SizedBox(height: 24),
+                      // (6) TAMBAHAN LATIHAN 2: Tombol memanggil _submit
                       CustomButton(
                         text: 'Masuk ke Mahastudy',
-                        onPressed: _handleLogin,
+                        onPressed: _submit,
                         icon: Icons.login_rounded,
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text('Belum punya akun? ', style: AppTextStyles.bodySecondary),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacementNamed(context, '/home');
+                              Navigator.pushReplacementNamed(context, AppRoutes.home);
                             },
                             child: Text(
                               'Masuk Mode Tamu',
