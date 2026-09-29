@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-// TAMBAHAN LATIHAN 2: Import repository, model, routes, dan state views
-import '../data/item_repository.dart';
-import '../models/item.dart';
+import '../data/task_repository.dart';
 import '../models/task_model.dart';
 import '../models/schedule_model.dart';
 import '../routes/app_routes.dart';
@@ -23,33 +21,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // (2) TAMBAHAN LATIHAN 2: Variabel state
-  final _repository = ItemRepository();
+  final _repository = TaskRepository();
   ViewStatus _status = ViewStatus.loading;
-  List<Item> _items = [];
+  List<TaskModel> _tasks = [];
   String _errorMessage = '';
   final bool _simulateError = false; // Ubah ke true untuk menguji error state
-
-  // Mock Data Halaman Home (PRD Kelompok 7)
-  final List<TaskModel> _tasks = [
-    TaskModel(
-      id: 't1',
-      courseName: 'Pemrograman Mobile',
-      title: 'Laporan Praktikum Modul 01',
-      deadline: DateTime.now().add(const Duration(days: 1)),
-      priority: TaskPriority.high,
-      status: TaskStatus.inProgress,
-      notes: 'Ekstrak kode Flutter & bukti screenshot',
-    ),
-    TaskModel(
-      id: 't2',
-      courseName: 'Sistem Informasi Manajemen',
-      title: 'Analisis PRD Sistem Kampus',
-      deadline: DateTime.now().add(const Duration(days: 3)),
-      priority: TaskPriority.medium,
-      status: TaskStatus.todo,
-      notes: 'Format PDF maksimal 5MB',
-    ),
-  ];
 
   final List<ScheduleModel> _schedules = [
     ScheduleModel(
@@ -92,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final items = await _repository.fetchItems(simulateError: _simulateError);
       if (!mounted) return;
       setState(() {
-        _items = items;
+        _tasks = items;
         _status = ViewStatus.success;
       });
     } catch (e) {
@@ -292,8 +268,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildList() {
-    if (_items.isEmpty) {
-      return const EmptyView(message: 'Belum ada data.');
+    if (_tasks.isEmpty) {
+      return const EmptyView(message: 'Belum ada data tugas.');
     }
 
     final completedCount = _tasks.where((t) => t.status == TaskStatus.completed).length;
@@ -344,52 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
-            // (7) TAMBAHAN LATIHAN 2: Section Item dari ItemRepository dengan navigasi ke Detail
-            Text('Daftar Item Akademik', style: AppTextStyles.heading2),
-            const SizedBox(height: 12),
-            ..._items.map((item) => Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.school_rounded, color: AppColors.primary, size: 24),
-                    ),
-                    title: Text(item.title, style: AppTextStyles.heading3),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        item.subtitle,
-                        style: AppTextStyles.bodySecondary.copyWith(fontSize: 13),
-                      ),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.detail,
-                      arguments: item,
-                    ),
-                  ),
-                )),
-            const SizedBox(height: 24),
-
-            // Section Tugas & Deadline Terdekat (Praktikum 1)
+            // Section Tugas & Deadline Terdekat (PRD Mahastudy)
             Text('Tugas & Deadline Terdekat', style: AppTextStyles.heading2),
             const SizedBox(height: 12),
             ..._tasks.map((task) => TaskCard(
@@ -398,6 +329,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     setState(() => task.status = newStatus);
                   },
                   onUploadProof: () => _showProofModal(task),
+                  // (7) TAMBAHAN LATIHAN 2: Kirim task ke DetailScreen
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.detail,
+                    arguments: task,
+                  ),
                 )),
             const SizedBox(height: 24),
 

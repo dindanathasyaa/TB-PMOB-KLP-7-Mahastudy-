@@ -1,7 +1,7 @@
 // TAMBAHAN LATIHAN 2
 import 'package:flutter/material.dart';
 
-import '../models/item.dart';
+import '../models/task_model.dart';
 import '../screens/catatan_form_screen.dart';
 import '../screens/detail_screen.dart';
 import '../screens/home_screen.dart';
@@ -12,7 +12,7 @@ import '../screens/not_found_screen.dart';
 class AppRoutes {
   AppRoutes._();
 
-  static const String landing = '/landing';
+  static const String landing = '/';
   static const String login = '/login';
   static const String home = '/home';
   static const String detail = '/detail';
@@ -20,7 +20,6 @@ class AppRoutes {
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case '/':
       case landing:
         return MaterialPageRoute<void>(
           builder: (_) => const LandingScreen(),
@@ -38,7 +37,7 @@ class AppRoutes {
         );
       case detail:
         final args = settings.arguments;
-        if (args is Item) {
+        if (args is TaskModel) {
           return MaterialPageRoute<void>(
             builder: (_) => DetailScreen(item: args),
             settings: settings,

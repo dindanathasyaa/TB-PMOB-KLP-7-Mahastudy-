@@ -24,8 +24,8 @@ class MahastudyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      // TAMBAHAN LATIHAN 2: Konfigurasi Named Routes
-      initialRoute: AppRoutes.login,
+      // TAMBAHAN LATIHAN 2: Rute awal Landing Screen (alur PRD)
+      initialRoute: AppRoutes.landing,
       onGenerateRoute: AppRoutes.onGenerateRoute,
       onUnknownRoute: AppRoutes.onUnknownRoute,
     );
