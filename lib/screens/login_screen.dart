@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../utils/validators.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_input_field.dart';
 
@@ -16,9 +18,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // (2) buang controller saat layar ditutup
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // (3) dijalankan saat tombol Masuk ditekan
   void _handleLogin() {
-    // Langsung navigasi ke /home saat tombol Masuk diklik
-    Navigator.pushReplacementNamed(context, '/home');
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.home);
   }
 
   @override
@@ -48,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Form(
                   key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: 'contoh: mahasiswa@unand.ac.id',
                         prefixIcon: Icons.email_outlined,
                         controller: _emailController,
+                        validator: Validators.email,
                       ),
                       const SizedBox(height: 16),
                       CustomInputField(
@@ -99,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icons.lock_outline,
                         isPassword: true,
                         controller: _passwordController,
+                        validator: Validators.password,
                       ),
                       const SizedBox(height: 24),
                       CustomButton(
@@ -113,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text('Belum punya akun? ', style: AppTextStyles.bodySecondary),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacementNamed(context, '/home');
+                              Navigator.pushReplacementNamed(context, AppRoutes.home);
                             },
                             child: Text(
                               'Masuk Mode Tamu',

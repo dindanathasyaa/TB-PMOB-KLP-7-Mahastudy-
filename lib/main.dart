@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/app_colors.dart';
-import 'screens/landing_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'routes/app_routes.dart';
 
 void main() {
   runApp(const MahastudyApp());
@@ -25,12 +23,9 @@ class MahastudyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LandingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-      },
+      initialRoute: AppRoutes.landing,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
+      onUnknownRoute: AppRoutes.onUnknownRoute,
     );
   }
 }

@@ -8,6 +8,7 @@ class TaskCard extends StatelessWidget {
   final Function(TaskStatus) onStatusChanged;
   final VoidCallback onUploadProof;
   final VoidCallback? onDelete;
+  final VoidCallback? onTap;
 
   const TaskCard({
     super.key,
@@ -15,6 +16,7 @@ class TaskCard extends StatelessWidget {
     required this.onStatusChanged,
     required this.onUploadProof,
     this.onDelete,
+    this.onTap,
   });
 
   Color _getPriorityColor() {
@@ -45,25 +47,27 @@ class TaskCard extends StatelessWidget {
     final statusColor = _getStatusColor();
     final isCompleted = task.status == TaskStatus.completed;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isCompleted ? AppColors.success.withValues(alpha: 0.5) : AppColors.border,
-          width: isCompleted ? 1.5 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCompleted ? AppColors.success.withValues(alpha: 0.5) : AppColors.border,
+            width: isCompleted ? 1.5 : 1,
           ),
-        ],
-      ),
-      child: Column(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Category/Matkul & Priority Badge
@@ -219,6 +223,6 @@ class TaskCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

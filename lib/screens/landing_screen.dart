@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../routes/app_routes.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/custom_button.dart';
@@ -79,7 +80,7 @@ class LandingScreen extends StatelessWidget {
                     text: 'Mulai Sekarang',
                     icon: Icons.arrow_forward_rounded,
                     onPressed: () {
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.pushNamed(context, AppRoutes.login);
                     },
                   ),
                   const SizedBox(height: 12),
@@ -87,7 +88,7 @@ class LandingScreen extends StatelessWidget {
                     text: 'Sudah Punya Akun? Masuk',
                     isSecondary: true,
                     onPressed: () {
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.pushNamed(context, AppRoutes.login);
                     },
                   ),
                   const SizedBox(height: 16),

@@ -3,8 +3,13 @@ import '../models/task_model.dart';
 import '../models/schedule_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../routes/app_routes.dart';
 import '../widgets/task_card.dart';
 import '../widgets/schedule_card.dart';
+import '../data/task_repository.dart';
+import '../widgets/state_views.dart';
+
+enum ViewStatus { loading, success, error }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,27 +19,37 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Mock Data Halaman Home (PRD Kelompok 7)
-  final List<TaskModel> _tasks = [
-    TaskModel(
-      id: 't1',
-      courseName: 'Pemrograman Mobile',
-      title: 'Laporan Praktikum Modul 01',
-      deadline: DateTime.now().add(const Duration(days: 1)),
-      priority: TaskPriority.high,
-      status: TaskStatus.inProgress,
-      notes: 'Ekstrak kode Flutter & bukti screenshot',
-    ),
-    TaskModel(
-      id: 't2',
-      courseName: 'Sistem Informasi Manajemen',
-      title: 'Analisis PRD Sistem Kampus',
-      deadline: DateTime.now().add(const Duration(days: 3)),
-      priority: TaskPriority.medium,
-      status: TaskStatus.todo,
-      notes: 'Format PDF maksimal 5MB',
-    ),
-  ];
+  final _repository = TaskRepository();
+  ViewStatus _status = ViewStatus.loading;
+  List<TaskModel> _tasks = [];
+  String _errorMessage = '';
+  bool _simulateError = false; // ubah ke true untuk menguji error state
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    if (_status != ViewStatus.loading) {
+      setState(() => _status = ViewStatus.loading);
+    }
+    try {
+      final items = await _repository.fetchItems(simulateError: _simulateError);
+      if (!mounted) return;
+      setState(() {
+        _tasks = items;
+        _status = ViewStatus.success;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _status = ViewStatus.error;
+      });
+    }
+  }
 
   final List<ScheduleModel> _schedules = [
     ScheduleModel(
@@ -181,9 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final completedCount = _tasks.where((t) => t.status == TaskStatus.completed).length;
-    final totalCount = _tasks.length;
-    final progressRatio = totalCount > 0 ? completedCount / totalCount : 0.0;
+
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -232,72 +245,99 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Banner Ringkasan Progres Akademik
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.primaryDark],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Progres Tugas Akademik', style: AppTextStyles.heading3.copyWith(color: Colors.white)),
-                              Text('${(progressRatio * 100).toInt()}% Selesai', style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: progressRatio,
-                              minHeight: 8,
-                              backgroundColor: Colors.white.withValues(alpha: 0.3),
-                              color: AppColors.success,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text('$completedCount dari $totalCount tugas telah diselesaikan.', style: AppTextStyles.caption.copyWith(color: Colors.white.withValues(alpha: 0.9))),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Section Tugas & Deadline Terdekat
-                    Text('Tugas & Deadline Terdekat', style: AppTextStyles.heading2),
-                    const SizedBox(height: 12),
-                    ..._tasks.map((task) => TaskCard(
-                          task: task,
-                          onStatusChanged: (newStatus) {
-                            setState(() => task.status = newStatus);
-                          },
-                          onUploadProof: () => _showProofModal(task),
-                        )),
-                    const SizedBox(height: 24),
-                    // Section Jadwal Kuliah Hari Ini
-                    Text('Jadwal Kuliah Hari Ini', style: AppTextStyles.heading2),
-                    const SizedBox(height: 12),
-                    ..._schedules.map((schedule) => ScheduleCard(
-                          schedule: schedule,
-                          onViewMap: () => _showLocationModal(schedule),
-                        )),
-                  ],
+            body: _buildContent(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // (6) memilih tampilan: loading / error / empty / daftar data
+  Widget _buildContent() {
+    return switch (_status) {
+      ViewStatus.loading => const LoadingView(),
+      ViewStatus.error => ErrorView(message: _errorMessage, onRetry: _loadItems),
+      ViewStatus.success => _buildList(),
+    };
+  }
+
+  Widget _buildList() {
+    if (_tasks.isEmpty) {
+      return const EmptyView(message: 'Belum ada data tugas.');
+    }
+
+    final completedCount = _tasks.where((t) => t.status == TaskStatus.completed).length;
+    final totalCount = _tasks.length;
+    final progressRatio = totalCount > 0 ? completedCount / totalCount : 0.0;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Banner Ringkasan Progres Akademik
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Progres Tugas Akademik', style: AppTextStyles.heading3.copyWith(color: Colors.white)),
+                      Text('${(progressRatio * 100).toInt()}% Selesai', style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: progressRatio,
+                      minHeight: 8,
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('$completedCount dari $totalCount tugas telah diselesaikan.', style: AppTextStyles.caption.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                ],
               ),
             ),
-          ),
+            const SizedBox(height: 24),
+            // Section Tugas & Deadline Terdekat
+            Text('Tugas & Deadline Terdekat', style: AppTextStyles.heading2),
+            const SizedBox(height: 12),
+            ..._tasks.map((task) => TaskCard(
+                  task: task,
+                  onStatusChanged: (newStatus) {
+                    setState(() => task.status = newStatus);
+                  },
+                  onUploadProof: () => _showProofModal(task),
+                  // (7) kirim item yang dipilih ke layar Detail
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.detail,
+                    arguments: task,
+                  ),
+                )),
+            const SizedBox(height: 24),
+            // Section Jadwal Kuliah Hari Ini
+            Text('Jadwal Kuliah Hari Ini', style: AppTextStyles.heading2),
+            const SizedBox(height: 12),
+            ..._schedules.map((schedule) => ScheduleCard(
+                  schedule: schedule,
+                  onViewMap: () => _showLocationModal(schedule),
+                )),
+          ],
         ),
       ),
     );
