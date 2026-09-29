@@ -5,6 +5,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/task_card.dart';
 import '../widgets/schedule_card.dart';
+import '../data/item_repository.dart';
+import '../routes/app_routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,52 +16,52 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Mock Data Halaman Home (PRD Kelompok 7)
-  final List<TaskModel> _tasks = [
-    TaskModel(
-      id: 't1',
-      courseName: 'Pemrograman Mobile',
-      title: 'Laporan Praktikum Modul 01',
-      deadline: DateTime.now().add(const Duration(days: 1)),
-      priority: TaskPriority.high,
-      status: TaskStatus.inProgress,
-      notes: 'Ekstrak kode Flutter & bukti screenshot',
-    ),
-    TaskModel(
-      id: 't2',
-      courseName: 'Sistem Informasi Manajemen',
-      title: 'Analisis PRD Sistem Kampus',
-      deadline: DateTime.now().add(const Duration(days: 3)),
-      priority: TaskPriority.medium,
-      status: TaskStatus.todo,
-      notes: 'Format PDF maksimal 5MB',
-    ),
-  ];
+  final ItemRepository _repository = ItemRepository();
+  
+  List<TaskModel> _tasks = [];
+  List<ScheduleModel> _schedules = [];
+  
+  bool _isLoading = true;
+  bool _isError = false;
+  String _errorMessage = '';
 
-  final List<ScheduleModel> _schedules = [
-    ScheduleModel(
-      id: 's1',
-      title: 'Praktikum Pemrograman Mobile',
-      courseOrOrg: 'Sistem Informasi',
-      dayOrDate: 'Selasa, 13:30 WIB',
-      timeRange: '13:30 - 16:00',
-      room: 'Lab Komputer 02',
-      building: 'Gedung FTI Unand',
-      mapCoordinates: 'R. Lab 02, Lantai 2 Gedung FTI',
-      type: ScheduleType.classSession,
-    ),
-    ScheduleModel(
-      id: 's2',
-      title: 'Rapat Organisasi HIMA SI',
-      courseOrOrg: 'Himpunan Mahasiswa',
-      dayOrDate: 'Rabu, 16:30 WIB',
-      timeRange: '16:30 - 18:00',
-      room: 'Ruang Sekretariat',
-      building: 'Gedung PKM Unand',
-      mapCoordinates: 'Sekretariat HIMA SI PKM',
-      type: ScheduleType.organization,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _isError = false;
+      _errorMessage = '';
+    });
+
+    try {
+      final tasks = await _repository.getTasks();
+      final schedules = await _repository.getSchedules();
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _tasks = tasks;
+        _schedules = schedules;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isError = true;
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   void _showLocationModal(ScheduleModel schedule) {
     showModalBottomSheet(
@@ -233,69 +235,110 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Banner Ringkasan Progres Akademik
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.primaryDark],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _isError 
+                  ? Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Progres Tugas Akademik', style: AppTextStyles.heading3.copyWith(color: Colors.white)),
-                              Text('${(progressRatio * 100).toInt()}% Selesai', style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ],
+                          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                          const SizedBox(height: 16),
+                          Text(_errorMessage.isNotEmpty ? _errorMessage : 'Gagal memuat data', style: AppTextStyles.heading2, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadData,
+                            child: const Text('Coba Lagi'),
                           ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: progressRatio,
-                              minHeight: 8,
-                              backgroundColor: Colors.white.withValues(alpha: 0.3),
-                              color: AppColors.success,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text('$completedCount dari $totalCount tugas telah diselesaikan.', style: AppTextStyles.caption.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Section Tugas & Deadline Terdekat
-                    Text('Tugas & Deadline Terdekat', style: AppTextStyles.heading2),
-                    const SizedBox(height: 12),
-                    ..._tasks.map((task) => TaskCard(
-                          task: task,
-                          onStatusChanged: (newStatus) {
-                            setState(() => task.status = newStatus);
-                          },
-                          onUploadProof: () => _showProofModal(task),
-                        )),
-                    const SizedBox(height: 24),
-                    // Section Jadwal Kuliah Hari Ini
-                    Text('Jadwal Kuliah Hari Ini', style: AppTextStyles.heading2),
-                    const SizedBox(height: 12),
-                    ..._schedules.map((schedule) => ScheduleCard(
-                          schedule: schedule,
-                          onViewMap: () => _showLocationModal(schedule),
-                        )),
-                  ],
-                ),
-              ),
+                    )
+                  : _tasks.isEmpty && _schedules.isEmpty
+                    ? Center(
+                        child: Text('Tidak ada data.', style: AppTextStyles.bodySecondary),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Banner Ringkasan Progres Akademik
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.primaryDark],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Progres Tugas Akademik', style: AppTextStyles.heading3.copyWith(color: Colors.white)),
+                                      Text('${(progressRatio * 100).toInt()}% Selesai', style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: LinearProgressIndicator(
+                                      value: progressRatio,
+                                      minHeight: 8,
+                                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text('$completedCount dari $totalCount tugas telah diselesaikan.', style: AppTextStyles.caption.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Section Tugas & Deadline Terdekat
+                            Text('Tugas & Deadline Terdekat', style: AppTextStyles.heading2),
+                            const SizedBox(height: 12),
+                            ..._tasks.map((task) => GestureDetector(
+                                  onTap: () async {
+                                    // Navigasi ke detail dan terima data kembali (Langkah H)
+                                    final result = await Navigator.pushNamed(
+                                      context, 
+                                      AppRoutes.taskDetail,
+                                      arguments: task,
+                                    );
+                                    if (!context.mounted) return;
+                                    if (result is String) {
+                                      setState(() {
+                                        task.notes = result;
+                                      });
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Catatan berhasil diperbarui')),
+                                      );
+                                    }
+                                  },
+                                  child: TaskCard(
+                                    task: task,
+                                    onStatusChanged: (newStatus) {
+                                      setState(() => task.status = newStatus);
+                                    },
+                                    onUploadProof: () => _showProofModal(task),
+                                  ),
+                                )),
+                            const SizedBox(height: 24),
+                            // Section Jadwal Kuliah Hari Ini
+                            Text('Jadwal Kuliah Hari Ini', style: AppTextStyles.heading2),
+                            const SizedBox(height: 12),
+                            ..._schedules.map((schedule) => ScheduleCard(
+                                  schedule: schedule,
+                                  onViewMap: () => _showLocationModal(schedule),
+                                )),
+                          ],
+                        ),
+                      ),
             ),
           ),
         ),

@@ -3,6 +3,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_input_field.dart';
+import '../utils/validators.dart';
+import '../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,10 +17,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void _handleLogin() {
-    // Langsung navigasi ke /home saat tombol Masuk diklik
-    Navigator.pushReplacementNamed(context, '/home');
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Simulasi proses login asinkron
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -91,6 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hint: 'contoh: mahasiswa@unand.ac.id',
                         prefixIcon: Icons.email_outlined,
                         controller: _emailController,
+                        validator: Validators.email,
                       ),
                       const SizedBox(height: 16),
                       CustomInputField(
@@ -99,12 +128,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icons.lock_outline,
                         isPassword: true,
                         controller: _passwordController,
+                        validator: (v) => Validators.required(v, 'Kata sandi'),
                       ),
                       const SizedBox(height: 24),
                       CustomButton(
                         text: 'Masuk ke Mahastudy',
                         onPressed: _handleLogin,
                         icon: Icons.login_rounded,
+                        isLoading: _isLoading,
                       ),
                       const SizedBox(height: 20),
                       Row(
@@ -113,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text('Belum punya akun? ', style: AppTextStyles.bodySecondary),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacementNamed(context, '/home');
+                              Navigator.pushReplacementNamed(context, AppRoutes.home);
                             },
                             child: Text(
                               'Masuk Mode Tamu',

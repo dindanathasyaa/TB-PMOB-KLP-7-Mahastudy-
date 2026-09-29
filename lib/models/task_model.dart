@@ -9,7 +9,7 @@ class TaskModel {
   final TaskPriority priority;
   TaskStatus status;
   String? proofFilePath;
-  final String notes;
+  String notes;
 
   TaskModel({
     required this.id,
